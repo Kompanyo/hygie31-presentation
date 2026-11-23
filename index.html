@@ -4477,7 +4477,7 @@ figcaption span,
   display: flex;
   height: calc(100svh - var(--header-h, 70px));
   margin-bottom: calc(-100svh + var(--header-h, 70px));
-  align-items: flex-start;
+  align-items: flex-end;
   padding: clamp(28px, 5svh, 56px) var(--page-pad);
   opacity: var(--closing-title-opacity, 0);
   transform: translateY(var(--closing-title-shift, 24px));
@@ -7282,7 +7282,7 @@ if (closingSection && closingTitle) {
     const fadeIn = clamp01((window.innerHeight - rect.top) / fadeDistance);
     const fadeOutDistance = Math.max(window.innerHeight * .38, 220);
     const fadeOut = secondFigureRect
-      ? clamp01((secondFigureRect.top - headerHeight) / fadeOutDistance)
+      ? clamp01((secondFigureRect.top - headerHeight + fadeOutDistance) / fadeOutDistance)
       : clamp01(rect.bottom / fadeDistance);
     const opacity = Math.min(fadeIn, fadeOut);
     closingTitle.style.setProperty("--closing-title-opacity", opacity.toFixed(3));
