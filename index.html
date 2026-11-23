@@ -2889,11 +2889,11 @@ figcaption span,
 .bands-reference-rail {
   position: absolute;
   z-index: 2;
-  top: clamp(230px, 32vh, 360px);
-  right: 26px;
-  bottom: 26px;
+  top: clamp(250px, 35vh, 390px);
+  right: 18px;
+  bottom: 42px;
   display: grid;
-  width: min(29vw, 450px);
+  width: min(22vw, 300px);
   grid-template-rows: repeat(3, minmax(0, 1fr));
   gap: 8px;
   pointer-events: none;
@@ -4477,8 +4477,8 @@ figcaption span,
   display: flex;
   height: calc(100svh - var(--header-h, 70px));
   margin-bottom: calc(-100svh + var(--header-h, 70px));
-  align-items: flex-end;
-  padding: 0 var(--page-pad) clamp(72px, 10svh, 116px);
+  align-items: flex-start;
+  padding: clamp(28px, 5svh, 56px) var(--page-pad);
   opacity: var(--closing-title-opacity, 0);
   transform: translateY(var(--closing-title-shift, 24px));
   pointer-events: none;
@@ -4491,6 +4491,8 @@ figcaption span,
   background: rgba(5, 28, 29, .42);
   box-shadow: 0 18px 54px rgba(0, 0, 0, .14);
   backdrop-filter: blur(6px);
+  transform: translateY(var(--closing-panel-y, 0px));
+  will-change: transform;
 }
 
 .closing-story-title p {
@@ -4565,7 +4567,6 @@ figcaption span,
 @media (max-width: 700px) {
   .closing-story-title {
     padding-right: 20px;
-    padding-bottom: 72px;
     padding-left: 20px;
   }
   .closing-story-title > div { width: 100%; }
@@ -5607,6 +5608,7 @@ figcaption span,
     background: var(--deep);
     box-shadow: none;
     backdrop-filter: none;
+    transform: none !important;
   }
 
   .closing-story-figure { break-before: page; }
@@ -7279,8 +7281,23 @@ if (closingSection && closingTitle) {
     const fadeIn = clamp01((window.innerHeight - rect.top) / fadeDistance);
     const fadeOut = clamp01(rect.bottom / fadeDistance);
     const opacity = Math.min(fadeIn, fadeOut);
+    const headerHeight = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 70;
+    const scrollRange = Math.max(closingSection.offsetHeight - closingTitle.offsetHeight, 1);
+    const progress = clamp01((headerHeight - rect.top) / scrollRange);
+    const titlePanel = closingTitle.firstElementChild;
+    const titleStyles = getComputedStyle(closingTitle);
+    const availableTravel = titlePanel
+      ? Math.max(
+          closingTitle.clientHeight
+          - titlePanel.offsetHeight
+          - Number.parseFloat(titleStyles.paddingTop)
+          - Number.parseFloat(titleStyles.paddingBottom),
+          0
+        )
+      : 0;
     closingTitle.style.setProperty("--closing-title-opacity", opacity.toFixed(3));
     closingTitle.style.setProperty("--closing-title-shift", `${((1 - opacity) * 24).toFixed(1)}px`);
+    closingTitle.style.setProperty("--closing-panel-y", `${(progress * availableTravel).toFixed(1)}px`);
     closingTitleFrameRequested = false;
   };
 
