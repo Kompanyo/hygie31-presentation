@@ -4475,10 +4475,11 @@ figcaption span,
   z-index: 3;
   top: var(--header-h, 70px);
   display: flex;
-  height: calc(100svh - var(--header-h, 70px));
-  margin-bottom: calc(-100svh + var(--header-h, 70px));
+  height: var(--closing-sticky-height, calc(100svh - var(--header-h, 70px)));
+  margin-bottom: var(--closing-sticky-offset, calc(-100svh + var(--header-h, 70px)));
   align-items: flex-end;
   padding: clamp(28px, 5svh, 56px) var(--page-pad);
+  padding-bottom: calc(clamp(28px, 5svh, 56px) + var(--closing-image-bottom-offset, 0px));
   opacity: var(--closing-title-opacity, 0);
   transform: translateY(var(--closing-title-shift, 24px));
   pointer-events: none;
@@ -5481,146 +5482,27 @@ figcaption span,
 
 @media print {
   @page {
-    size: A4 landscape;
-    margin: 12mm;
-  }
-
-  :root {
-    --page-pad: 0;
+    margin: 18mm;
   }
 
   html,
   body {
-    background: white;
-    color: #111;
-    font-size: 11pt;
+    min-height: 0 !important;
+    background: #fff !important;
   }
 
-  .site-header,
-  .mobile-nav,
-  .frame-expand {
+  body > * {
     display: none !important;
   }
 
-  .hero,
-  .grid-section,
-  .identity-section,
-  .territory-section,
-  .workplace-section,
-  .outdoor-section,
-  .bands-section,
-  .hall-section,
-  .material-section,
-  .decisions,
-  .closing-visual {
-    break-after: page;
-  }
-
-  .team-section {
-    break-after: page;
-  }
-
-  .hero,
-  .material-section {
-    min-height: 175mm;
-  }
-
-  .section-pad {
-    max-width: none;
-    padding: 16mm 8mm;
-  }
-
-  .reveal {
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  .interactive-section {
+  body::before {
+    content: "Impression désactivée — cette présentation est destinée à la consultation à l’écran.";
     display: block;
-    min-height: auto;
-    break-before: page;
-    break-after: page;
-  }
-
-  .interactive-copy {
-    min-height: auto;
-  }
-
-  .interactive-frame-wrap {
-    min-height: 140mm;
-  }
-
-  .interactive-frame {
-    height: 140mm;
-  }
-
-  .closing-copy {
-    position: relative;
-    top: auto;
-    height: auto;
-    margin-bottom: 0;
-    padding: 12mm 8mm;
-    background: var(--deep);
-  }
-
-  .closing-copy-panel {
-    width: 100%;
+    margin: 0;
     padding: 0;
-    background: transparent;
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .closing-media,
-  .closing-media picture {
-    min-height: 0;
-    height: auto;
-  }
-
-  .closing-media img {
-    height: auto;
-    object-fit: contain;
-  }
-
-  .closing-media-caption {
-    position: static;
-    max-width: none;
-    padding: 3mm 0 5mm;
-    background: white;
-    color: #555;
-    backdrop-filter: none;
-  }
-
-  .closing-story-title {
-    position: relative;
-    top: auto;
-    height: auto;
-    margin-bottom: 0;
-    padding: 10mm 8mm;
-    opacity: 1 !important;
-    transform: none !important;
-  }
-
-  .closing-story-title > div {
-    width: 100%;
-    background: var(--deep);
-    box-shadow: none;
-    backdrop-filter: none;
-    transform: none !important;
-  }
-
-  .closing-story-figure { break-before: page; }
-
-  .closing-story-figure figcaption {
-    position: static;
-    padding: 3mm 0 5mm;
-    background: white;
-    color: #555;
-  }
-
-  .site-footer {
-    min-height: 140mm;
-    break-before: page;
+    color: #5f6a68;
+    font: 12pt/1.5 Arial, sans-serif;
+    text-align: center;
   }
 }
 
@@ -7278,13 +7160,20 @@ if (closingSection && closingTitle) {
     const rect = closingSection.getBoundingClientRect();
     const secondFigureRect = closingFigures[1]?.getBoundingClientRect();
     const headerHeight = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-h")) || 70;
-    const fadeDistance = Math.max(window.innerHeight * .42, 260);
-    const fadeIn = clamp01((window.innerHeight - rect.top) / fadeDistance);
-    const fadeOutDistance = Math.max(window.innerHeight * .38, 220);
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const stickyHeight = Math.max(viewportHeight - headerHeight, 320);
+    const firstImageHeight = closingFigures[0]?.querySelector("img")?.getBoundingClientRect().height || stickyHeight;
+    const imageBottomOffset = Math.max(stickyHeight - firstImageHeight, 0);
+    const fadeDistance = Math.max(viewportHeight * .42, 260);
+    const fadeIn = clamp01((viewportHeight - rect.top) / fadeDistance);
+    const fadeOutDistance = Math.max(viewportHeight * .38, 220);
     const fadeOut = secondFigureRect
       ? clamp01((secondFigureRect.top - headerHeight + fadeOutDistance) / fadeOutDistance)
       : clamp01(rect.bottom / fadeDistance);
     const opacity = Math.min(fadeIn, fadeOut);
+    closingTitle.style.setProperty("--closing-sticky-height", `${stickyHeight.toFixed(1)}px`);
+    closingTitle.style.setProperty("--closing-sticky-offset", `${(-stickyHeight).toFixed(1)}px`);
+    closingTitle.style.setProperty("--closing-image-bottom-offset", `${imageBottomOffset.toFixed(1)}px`);
     closingTitle.style.setProperty("--closing-title-opacity", opacity.toFixed(3));
     closingTitle.style.setProperty("--closing-title-shift", `${((1 - opacity) * 24).toFixed(1)}px`);
     closingTitleFrameRequested = false;
@@ -7298,6 +7187,8 @@ if (closingSection && closingTitle) {
   }, { passive: true });
   window.addEventListener("resize", updateClosingTitle);
   window.addEventListener("pageshow", updateClosingTitle);
+  window.visualViewport?.addEventListener("resize", updateClosingTitle);
+  closingFigures.forEach((figure) => figure.querySelector("img")?.addEventListener("load", updateClosingTitle, { once: true }));
   updateClosingTitle();
 }
 
